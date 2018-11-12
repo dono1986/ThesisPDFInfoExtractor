@@ -1,0 +1,16 @@
+{
+	"name": "thesispdfinfoextractor",
+	"version": "1.0.0",
+	"description": "Offers a RESTful api for extracting useful information from bachelor and master thesis",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Tobias Puderer",
+	"license": "ISC",
+	"dependencies": {
+		"pdf.js-extract": "0.1.0",
+		"json-query": "2.2.2",
+		"express": "4.16.4"
+	}
+}
