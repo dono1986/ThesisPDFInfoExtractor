@@ -7,7 +7,7 @@ const jsonQuery = require('json-query')
 
 const POSS_DEGREE_COURSE = ["Studiengang"];
 
-const THESIS_TYPE = ["Bachelorthesis", "Masterthesis"];
+const THESIS_TYPE = ["Bachelorarbeit", "Masterarbeit"];
 
 const PRESENTED_BY = ["vorgelegt von"];
 
@@ -43,13 +43,7 @@ function extractThesisData(filename, options) {
         .then((data) => {
             
             let frontPageInfo = extractFrontPageData(data.pages[0].content);
-            console.log(data.pages[0].content);
-            let studiengang = getClosestNeighborTextByName(POSS_DEGREE_COURSE[0], data.pages[0].content);
-
-            console.log(studiengang);
-
-
-
+            console.log(frontPageInfo);
         })
         .catch((err) => {
             console.error(err);
@@ -57,63 +51,94 @@ function extractThesisData(filename, options) {
 
 }
 
-function getClosestNeighborTextByName(elementName, tree) {
+function getClosestNeighborTextByName(elementName, tree, options) {
 
     let element = tree.find((current) => {
         return (current.str == elementName);
     });
 
-    return getClosestNeighborText(element, tree);   
+    if(element==undefined) return ""; 
+
+    return getClosestNeighborText(element, tree, options);   
 }
 
-function getClosestNeighborText(element, tree) {
+function getClosestNeighborText(element, tree, options) {
 
-    let minXDelta = Infinity;
-    let minYDelta = Infinity;
     let foundStr = "";
 
-    for(let e of tree) {
+    let currentMinDistance = Infinity;
 
-        // Exclude static text
-        let found = COMBINED.find((current) => {
-            return (current == element.str);
-        });
+    let centerX = element.x + element.width/2;
+    let centerY = element.y + element.height/2;
 
-        if(found != undefined && e.str !== element.str) {
-
-            let x = Math.abs(element.x-e.x);
-            let y = Math.abs(element.y-e.y);
-
-            if(x<minXDelta && y<minYDelta) {
-                minXDelta = x;
-                minYDelta = y;
-                foundStr = e.str;
+        for(let comperativeObj of tree) {
+            // Exclude static text
+            let found = COMBINED.find((current) => {
+                return (current == comperativeObj.str);
+            });
+            if(found != undefined) {
+                continue;
             }
-            
-        }
+
+            if(comperativeObj.str !== element.str) {
+    
+                // Get center point of each textfield to correctly measure the distance between each element
+                let coCenterX = comperativeObj.x + comperativeObj.width/2;
+                let coCenterY = comperativeObj.y + comperativeObj.height/2;
+
+                // Calculate new vector between the two points
+                let newVectorX = coCenterX-centerX;
+                let newVectorY = coCenterY-centerY;
+
+                // Calculate length of vector
+                let length = Math.sqrt(newVectorX*newVectorX + newVectorY*newVectorY);
+
+                if(length<currentMinDistance) {
+                    currentMinDistance = length;
+                    foundStr = comperativeObj.str;
+                }
+                
+            }
+        
+
     }
+
+
+    
     return foundStr;
 }
 
 function extractFrontPageData(data) {
+
+    console.log(data);
+
     // Detect all data from PDF Front page
 
+    let thesisDocument = {};
     // degree course (dt. Studiengang)
+    
+    thesisDocument.degreeCourse = getClosestNeighborTextByName(POSS_DEGREE_COURSE[0], data);
 
     // examination regulations (dt. Prüfungsordnung)
+    thesisDocument.exRegulation = getClosestNeighborTextByName(thesisDocument.degreeCourse, data);
 
     // Title
+    thesisDocument.titleGerman = getClosestNeighborTextByName(THESIS_TYPE[0], data);
 
     // Eng. Title
+    thesisDocument.titleEnglish = getClosestNeighborTextByName(thesisDocument.titleGerman, data);
 
     // Author
+    thesisDocument.author = getClosestNeighborTextByName(PRESENTED_BY[0], data);
 
     // Hand-in date
+    thesisDocument.handInDate = getClosestNeighborTextByName(thesisDocument.author, data);
 
     // First reader
 
     // Second reader
 
+    return thesisDocument;
 
 
 }
