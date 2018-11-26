@@ -19,13 +19,17 @@ const COMBINED = [].concat(POSS_DEGREE_COURSE).concat(THESIS_TYPE).concat(PRESEN
 
 const options = {
     "firstpage": 1,
-    "lastpage" : 1
+    "lastpage" : 1,
+    "searchLeft" : true 
 }; /* see below */
 
-extractThesisData('D:/PDF/Annina Bold_869077_Bachelorthesis.pdf', options);
+//extractThesisData('D:/PDF/Annina Bold_869077_Bachelorthesis.pdf', options);
 
+extractThesisData('E:/Seafile/Austausch/Abschlussarbeiten/BA_Bold/Annina Bold_869077_Bachelorthesis.pdf',options);
 function extractThesisData(filename, options) {
    
+    console.log("options: " + options.searchLeft);
+
     const readPDFPromise = new Promise(function(resolve, reject) {
   
         //let filename = 'E:/Seafile/Austausch/Abschlussarbeiten/BA_Bold/Annina Bold_869077_Bachelorthesis.pdf';
@@ -42,7 +46,7 @@ function extractThesisData(filename, options) {
     readPDFPromise
         .then((data) => {
             
-            let frontPageInfo = extractFrontPageData(data.pages[0].content);
+            let frontPageInfo = extractFrontPageData(data.pages[0].content, options);
             console.log(frontPageInfo);
         })
         .catch((err) => {
@@ -64,6 +68,8 @@ function getClosestNeighborTextByName(elementName, tree, options) {
 
 function getClosestNeighborText(element, tree, options) {
 
+    console.log(options);
+
     let foundStr = "";
 
     let currentMinDistance = Infinity;
@@ -79,6 +85,21 @@ function getClosestNeighborText(element, tree, options) {
             if(found != undefined) {
                 continue;
             }
+
+            // Exclude items which aren't located in the search direction
+            if(options.searchLeft && comperativeObj.x > element.x+element.width) {
+                continue;
+            }
+            if(options.searchRight && comperativeObj.x+comperativeObj.width < element.x) {
+                continue;
+            }
+            if(options.searchUp && comperativeObj.y > element.y+element.height) {
+                continue;
+            }
+            if(options.searchDown && comperativeObj.y+comperativeObj.height < element.y) {
+                continue;
+            }
+
 
             if(comperativeObj.str !== element.str) {
     
@@ -108,31 +129,38 @@ function getClosestNeighborText(element, tree, options) {
     return foundStr;
 }
 
-function extractFrontPageData(data) {
+function extractFrontPageData(data, options) {
 
-    console.log(data);
+    //console.log(data);
 
     // Detect all data from PDF Front page
 
     let thesisDocument = {};
     // degree course (dt. Studiengang)
     
-    thesisDocument.degreeCourse = getClosestNeighborTextByName(POSS_DEGREE_COURSE[0], data);
+    thesisDocument.degreeCourse = getClosestNeighborTextByName(POSS_DEGREE_COURSE[0], data, options);
+    console.log("Degree Course found " + thesisDocument.degreeCourse);
 
     // examination regulations (dt. Prüfungsordnung)
-    thesisDocument.exRegulation = getClosestNeighborTextByName(thesisDocument.degreeCourse, data);
+    thesisDocument.exRegulation = getClosestNeighborTextByName(thesisDocument.degreeCourse, data, options);
+    console.log("Exmination regulations found " + thesisDocument.exRegulation);
+
 
     // Title
-    thesisDocument.titleGerman = getClosestNeighborTextByName(THESIS_TYPE[0], data);
+    thesisDocument.titleGerman = getClosestNeighborTextByName(THESIS_TYPE[0], data, options);
+    console.log("German title found " + thesisDocument.titleGerman);
 
     // Eng. Title
-    thesisDocument.titleEnglish = getClosestNeighborTextByName(thesisDocument.titleGerman, data);
+    thesisDocument.titleEnglish = getClosestNeighborTextByName(thesisDocument.titleGerman, data, options);
+    console.log("English title found " + thesisDocument.titleEnglish);
 
     // Author
-    thesisDocument.author = getClosestNeighborTextByName(PRESENTED_BY[0], data);
+    thesisDocument.author = getClosestNeighborTextByName(PRESENTED_BY[0], data, options);
+    console.log("Author found " + thesisDocument.author);
 
     // Hand-in date
-    thesisDocument.handInDate = getClosestNeighborTextByName(thesisDocument.author, data);
+    thesisDocument.handInDate = getClosestNeighborTextByName(thesisDocument.author, data, options);
+    console.log("Hand-In date found " + thesisDocument.handInDate);
 
     // First reader
 
