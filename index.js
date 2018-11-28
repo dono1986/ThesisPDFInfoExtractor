@@ -22,9 +22,9 @@ const options = {
     "lastpage" : 1
 }; /* see below */
 
-//extractThesisData('D:/PDF/Annina Bold_869077_Bachelorthesis.pdf', options);
+extractThesisData('D:/PDF/Annina Bold_869077_Bachelorthesis.pdf', options);
 
-extractThesisData('E:/Seafile/Austausch/Abschlussarbeiten/BA_Bold/Annina Bold_869077_Bachelorthesis.pdf',options);
+//extractThesisData('E:/Seafile/Austausch/Abschlussarbeiten/BA_Bold/Annina Bold_869077_Bachelorthesis.pdf',options);
 function extractThesisData(filename, options) {
    
 
@@ -55,7 +55,7 @@ function extractThesisData(filename, options) {
 
 }
 
-function getClosestNeighborTextByName(elementName, tree, options) {
+function getClosestNeighborElementByName(elementName, tree, options) {
 
     console.log("Searching for closest neighbors of element " + elementName);
     if(typeof options!='undefined' && options!=null) {
@@ -76,12 +76,12 @@ function getClosestNeighborTextByName(elementName, tree, options) {
         return "";
     }  
 
-    return getClosestNeighborText(element, tree, options);   
+    return getClosestNeighborElement(element, tree, options);   
 }
 
-function getClosestNeighborText(element, tree, options) {
+function getClosestNeighborElement(element, tree, options) {
 
-    let foundStr = "";
+    let foundObj = "";
 
     let currentMinDistance = Infinity;
 
@@ -99,7 +99,7 @@ function getClosestNeighborText(element, tree, options) {
             }
 
             let compElementIsAbove = comperativeObj.y+comperativeObj.height<element.y;
-            let compElementIsUnder = comperativeObj.y>element.y+element.height;
+            let compElementIsBelow = comperativeObj.y>element.y+element.height;
 
             let compElementIsRight = comperativeObj.x>element.x+element.width;
             let compElementIsLeft = comperativeObj.x+comperativeObj.width<element.x;
@@ -123,7 +123,7 @@ function getClosestNeighborText(element, tree, options) {
 
                 continue;
             }
-            if(options.searchDown==true && !compElementIsUnder) {
+            if(options.searchDown==true && !compElementIsBelow) {
                 console.log("Searching down, but compare element wasn't below");
 
                 continue;
@@ -131,7 +131,35 @@ function getClosestNeighborText(element, tree, options) {
 
 
             if(comperativeObj.str !== element.str) {
-    
+
+                let fixPointX = 0;
+                let fixPointY = 0;
+                let coFixPointX = 0;
+                let coFixPointY = 0;
+
+                // Comperative Object is left of element
+                if(compElementIsLeft) {
+                    if(compElementIsAbove) {
+                        fixPointX = element.x;
+                        fixPointY = element.y;
+                        coFixPointX = comperativeObj.x + comperativeObj.width;
+                        coFixPointY = comperativeObj.y + comperativeObj.height;
+
+                    } else if(compElementIsBelow) {
+                        fixPointX = element.x;
+                        fixPointY = element.y+element.height;
+                        coFixPointX = comperativeObj.x + comperativeObj.width;
+                        coFixPointY = comperativeObj.y;
+                    }
+                }
+
+                // Comperative Object is right of element
+
+                // Comperative Object is above the element
+
+                // Comperative Object is below the element
+
+
                 // Get center point of each textfield to correctly measure the distance between each element
                 let coCenterX = comperativeObj.x + comperativeObj.width/2;
                 let coCenterY = comperativeObj.y + comperativeObj.height/2;
@@ -143,9 +171,17 @@ function getClosestNeighborText(element, tree, options) {
                 // Calculate length of vector
                 let length = Math.sqrt(newVectorX*newVectorX + newVectorY*newVectorY);
 
+                console.log("#########################################");
+                console.log("Analysing elements " + element.str + " and " + comperativeObj.str);
+                console.log(element.str +  " centerX: " + centerX + ", " + "centerY: " + centerY);
+                console.log(comperativeObj.str  +  " centerX: " +  coCenterX + ", " + "centerY: " + coCenterY);
+                console.log("Distance: "  +  length);
+                console.log("#########################################");
+
+
                 if(length<currentMinDistance) {
                     currentMinDistance = length;
-                    foundStr = comperativeObj.str;
+                    foundObj = comperativeObj;
                 }
                 
             }
@@ -153,7 +189,7 @@ function getClosestNeighborText(element, tree, options) {
 
     }
 
-    return foundStr;
+    return foundObj;
 }
 
 function mergeConsecutiveCloseObjects(data, tolerance) {
@@ -177,7 +213,7 @@ function mergeConsecutiveCloseObjects(data, tolerance) {
                                         width: Math.max(firstValue.width, secondValue.width),
                                         str: (firstValue.str + "\n" + secondValue.str), 
                                         y: firstValue.y, 
-                                        height: secondValue.y + secondValue.height});
+                                        height: secondValue.y + secondValue.height - firstValue.y});
                 if(i+2<=data.length-1) {
                     i++;
                 }
@@ -221,34 +257,44 @@ function extractFrontPageData(data, options) {
     let thesisDocument = {};
     // degree course (dt. Studiengang)
     
-    thesisDocument.degreeCourse = getClosestNeighborTextByName(POSS_DEGREE_COURSE[0], dataAggregated, {searchDown: true});
+    let degreeCourseEl = getClosestNeighborElementByName(POSS_DEGREE_COURSE[0], dataAggregated, {searchDown: true});
+    thesisDocument.degreeCourse = degreeCourseEl.str;
     console.log("Degree Course found " + thesisDocument.degreeCourse);
 
     // examination regulations (dt. Prüfungsordnung)
-    thesisDocument.exRegulation = getClosestNeighborTextByName(thesisDocument.degreeCourse, dataAggregated,  {searchDown: true});
+    let exRegulationEl = getClosestNeighborElement(degreeCourseEl, dataAggregated,  {searchDown: true});
+    thesisDocument.exRegulation = exRegulationEl.str;
     console.log("Exmination regulations found " + thesisDocument.exRegulation);
 
     // Title
-    thesisDocument.titleGerman = getClosestNeighborTextByName(THESIS_TYPE[0], dataAggregated,  {searchDown: true});
+    let titleGermanEl = getClosestNeighborElementByName(THESIS_TYPE[0], dataAggregated,  {searchDown: true});
+    thesisDocument.titleGerman = titleGermanEl.str;
     console.log("German title found " + thesisDocument.titleGerman);
 
     // Eng. Title
-    thesisDocument.titleEnglish = getClosestNeighborTextByName(thesisDocument.titleGerman, dataAggregated,  {searchDown: true});
+    let titleEnglishEl = getClosestNeighborElement(titleGermanEl, dataAggregated,  {searchDown: true});
+    thesisDocument.titleEnglish = titleEnglishEl.str;
     console.log("English title found " + thesisDocument.titleEnglish);
 
     // Author
-    thesisDocument.author = getClosestNeighborTextByName(PRESENTED_BY[0], dataAggregated,  {});
+    let authorEl = getClosestNeighborElementByName(PRESENTED_BY[0], dataAggregated, {searchDown: true});
+    thesisDocument.author = authorEl.str;
     console.log("Author found " + thesisDocument.author);
 
     // Hand-in date
-    thesisDocument.handInDate = getClosestNeighborTextByName(thesisDocument.author, dataAggregated,   {searchDown: true});
+    let handInDateEl = getClosestNeighborElement(authorEl, dataAggregated, {searchDown: true});
+    thesisDocument.handInDate = handInDateEl.str;
     console.log("Hand-In date found " + thesisDocument.handInDate);
 
     // First reader
-    thesisDocument.firstReader = getClosestNeighborTextByName(FIRST_READER[0], dataAggregated, {searchRight: true});
+    let firstReaderEl = getClosestNeighborElementByName(FIRST_READER[0], dataAggregated, {searchRight: true});
+    thesisDocument.firstReader = firstReaderEl.str;
+    console.log("First reader found " + thesisDocument.handInDate);
 
     // Second reader
-    thesisDocument.secondReader = getClosestNeighborTextByName(SECOND_READER[0], dataAggregated, {searchRight: true});
+    let secondReaderEl = getClosestNeighborElementByName(SECOND_READER[0], dataAggregated, {searchRight: true});
+    thesisDocument.secondReader = secondReaderEl.str;
+    console.log("Second reader found " + thesisDocument.handInDate);
 
 
     return thesisDocument;
