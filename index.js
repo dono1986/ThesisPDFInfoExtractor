@@ -137,44 +137,67 @@ function getClosestNeighborElement(element, tree, options) {
                 let coFixPointX = 0;
                 let coFixPointY = 0;
 
-                // Comperative Object is left of element
-                if(compElementIsLeft) {
+                if(compElementIsLeft) { // Comperative Object is left of element
                     if(compElementIsAbove) {
                         fixPointX = element.x;
                         fixPointY = element.y;
                         coFixPointX = comperativeObj.x + comperativeObj.width;
                         coFixPointY = comperativeObj.y + comperativeObj.height;
-
                     } else if(compElementIsBelow) {
                         fixPointX = element.x;
                         fixPointY = element.y+element.height;
                         coFixPointX = comperativeObj.x + comperativeObj.width;
                         coFixPointY = comperativeObj.y;
+                    } else {
+                        fixPointX = element.x;
+                        fixPointY = element.y + element.height/2;
+                        coFixPointX = comperativeObj.x + comperativeObj.width;
+                        coFixPointY = fixPointY;
                     }
+                } else if(compElementIsRight) { // Comperative Object is right of element
+                    if(compElementIsAbove) {
+                        fixPointX = element.x + element.width;
+                        fixPointY = element.y;
+                        coFixPointX = comperativeObj.x;
+                        coFixPointY = comperativeObj.y + comperativeObj.height;
+                    } else if(compElementIsBelow) {
+                        fixPointX = element.x;
+                        fixPointY = element.y+element.height;
+                        coFixPointX = comperativeObj.x + comperativeObj.width;
+                        coFixPointY = comperativeObj.y;
+                    } else {
+                        fixPointX = element.x + element.width;
+                        fixPointY = element.y + element.height/2;
+                        coFixPointX = comperativeObj.x;
+                        coFixPointY = fixPointY;
+                    }
+                } else if(compElementIsAbove) { // Comperative Object is above element
+                    fixPointX = element.x + element.width/2;
+                    fixPointY = element.y;
+                    coFixPointX = fixPointX;
+                    coFixPointY = comperativeObj.y + comperativeObj.height;
+                } else { // Comperative Object is under element
+                    fixPointX = element.x + element.width/2;
+                    fixPointY = element.y + element.height;
+                    coFixPointX = fixPointX;
+                    coFixPointY = comperativeObj.y;
                 }
 
-                // Comperative Object is right of element
-
-                // Comperative Object is above the element
-
-                // Comperative Object is below the element
-
-
                 // Get center point of each textfield to correctly measure the distance between each element
-                let coCenterX = comperativeObj.x + comperativeObj.width/2;
-                let coCenterY = comperativeObj.y + comperativeObj.height/2;
+                //let coCenterX = comperativeObj.x + comperativeObj.width/2;
+                //let coCenterY = comperativeObj.y + comperativeObj.height/2;
 
                 // Calculate new vector between the two points
-                let newVectorX = coCenterX-centerX;
-                let newVectorY = coCenterY-centerY;
+                let newVectorX = coFixPointX - fixPointX;//coCenterX-centerX;
+                let newVectorY = coFixPointY - fixPointY;//coCenterY-centerY;
 
                 // Calculate length of vector
                 let length = Math.sqrt(newVectorX*newVectorX + newVectorY*newVectorY);
 
                 console.log("#########################################");
                 console.log("Analysing elements " + element.str + " and " + comperativeObj.str);
-                console.log(element.str +  " centerX: " + centerX + ", " + "centerY: " + centerY);
-                console.log(comperativeObj.str  +  " centerX: " +  coCenterX + ", " + "centerY: " + coCenterY);
+                console.log(element.str +  " fixPointX: " + fixPointX + ", " + "fixPointX: " + fixPointY);
+                console.log(comperativeObj.str  +  " fixPointX: " +  coFixPointY + ", " + "fixPointY: " + coFixPointY);
                 console.log("Distance: "  +  length);
                 console.log("#########################################");
 
@@ -292,7 +315,7 @@ function extractFrontPageData(data, options) {
     console.log("First reader found " + thesisDocument.handInDate);
 
     // Second reader
-    let secondReaderEl = getClosestNeighborElementByName(SECOND_READER[0], dataAggregated, {searchRight: true});
+    let secondReaderEl = getClosestNeighborElementByName(SECOND_READER[0], dataAggregated, {});
     thesisDocument.secondReader = secondReaderEl.str;
     console.log("Second reader found " + thesisDocument.handInDate);
 
